@@ -6,6 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
+# 환경변수 및 시크릿
+.env
+secrets/
+firebase-service-account.json
+
 # Distribution / packaging
 .Python
 build/
