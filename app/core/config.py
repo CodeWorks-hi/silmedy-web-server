@@ -1,6 +1,5 @@
-# app/core/config.py
-
 import os
+import json
 import boto3
 import firebase_admin
 from firebase_admin import credentials
@@ -14,7 +13,6 @@ aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
 aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
 aws_region = os.getenv("AWS_REGION", "ap-northeast-2")
 
-# 🔥 boto3 session 명시적 생성 + credentials 직접 설정
 session = boto3.session.Session()
 
 dynamodb = session.resource(
@@ -29,12 +27,13 @@ table_hospitals = dynamodb.Table("hospitals")
 table_diseases = dynamodb.Table("diseases")
 table_drugs = dynamodb.Table("drugs")
 
-# ✅ Firebase 초기화 함수
+# ✅ Firebase 초기화 함수 (🔥 수정한 부분)
 def init_firebase():
-    firebase_credential_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
+    firebase_credential_json = os.getenv("FIREBASE_CREDENTIALS_JSON")
     firebase_db_url = os.getenv("FIREBASE_DB_URL")
     if not firebase_admin._apps:
-        cred = credentials.Certificate(firebase_credential_path)
+        cred_info = json.loads(firebase_credential_json)
+        cred = credentials.Certificate(cred_info)
         firebase_admin.initialize_app(cred, {
             'databaseURL': firebase_db_url
         })
