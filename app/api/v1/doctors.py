@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException
+# app/api/v1/doctors.py
+
+from fastapi import APIRouter
 from app.services.doctor_service import (
     get_all_doctors,
     delete_doctor_by_license,
