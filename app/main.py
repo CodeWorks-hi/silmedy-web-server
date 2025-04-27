@@ -1,9 +1,15 @@
 # app/main.py
 
+import os
+from dotenv import load_dotenv
+
+# ✅ 1. 환경변수 로드 (.env)
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"))
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.core.config import load_env, init_firebase
+from app.core.config import init_firebase
 from app.api.v1.common import router as common_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.hospitals import router as hospitals_router
@@ -16,9 +22,6 @@ from app.api.v1.care_requests import router as care_requests_router
 from app.api.v1.drugs import router as drugs_router
 from app.api.v1.prescriptions import router as prescriptions_router
 from app.api.v1.diagnosis import router as diagnosis_router
-
-# ✅ 1. 환경변수 먼저 로드
-load_env()
 
 # ✅ 2. Firebase 초기화
 init_firebase()
