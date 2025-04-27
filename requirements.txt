@@ -1,5 +1,6 @@
 fastapi
 uvicorn
+boto3
 python-dotenv
 firebase-admin
-boto3
+pydantic
