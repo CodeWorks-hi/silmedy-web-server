@@ -1,26 +1,9 @@
+# app/main.py
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import load_env, init_firebase
-
-# ✅ 환경변수 먼저 로드
-load_env()
-
-# ✅ Firebase 먼저 초기화
-init_firebase()
-
-# ✅ FastAPI 인스턴스 생성
-app = FastAPI()
-
-# ✅ CORS 설정
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# ✅ 라우터 등록
 from app.api.v1.common import router as common_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.hospitals import router as hospitals_router
@@ -34,6 +17,24 @@ from app.api.v1.drugs import router as drugs_router
 from app.api.v1.prescriptions import router as prescriptions_router
 from app.api.v1.diagnosis import router as diagnosis_router
 
+# ✅ 1. 환경변수 먼저 로드
+load_env()
+
+# ✅ 2. Firebase 초기화
+init_firebase()
+
+# ✅ 3. FastAPI 인스턴스 생성
+app = FastAPI()
+
+# ✅ 4. CORS 설정
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ✅ 5. 라우터 등록
 app.include_router(common_router, prefix="/api/v1")
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(hospitals_router, prefix="/api/v1")

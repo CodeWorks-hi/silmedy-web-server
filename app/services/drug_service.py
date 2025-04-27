@@ -1,7 +1,4 @@
-from app.core.config import init_dynamodb
-
-dynamodb = init_dynamodb()
-table_drugs = dynamodb.Table("drugs")
+from app.core.config import table_drugs
 
 def get_all_drugs():
     response = table_drugs.scan()

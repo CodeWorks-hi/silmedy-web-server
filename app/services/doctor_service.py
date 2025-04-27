@@ -1,37 +1,38 @@
-from app.core.config import init_dynamodb
-from boto3.dynamodb.conditions import Attr
-
-dynamodb = init_dynamodb()
-table_doctors = dynamodb.Table("doctors")
+from firebase_admin import firestore
 
 def get_all_doctors():
-    response = table_doctors.scan()
-    return response.get("Items", [])
+    db = firestore.client()
+    collection_doctors = db.collection("doctors")
+    docs = collection_doctors.stream()
+    return [doc.to_dict() for doc in docs]
 
 def delete_doctor_by_license(license_number):
-    table_doctors.delete_item(
-        Key={'license_number': license_number}
-    )
+    db = firestore.client()
+    collection_doctors = db.collection("doctors")
+    docs = collection_doctors.where("license_number", "==", license_number).stream()
+    for doc in docs:
+        doc.reference.delete()
 
 def update_doctor_by_license(license_number, payload):
-    update_expression = "SET " + ", ".join(f"{k}=:{k}" for k in payload)
-    expression_attribute_values = {f":{k}": v for k, v in payload.items()}
-    table_doctors.update_item(
-        Key={'license_number': license_number},
-        UpdateExpression=update_expression,
-        ExpressionAttributeValues=expression_attribute_values
-    )
+    db = firestore.client()
+    collection_doctors = db.collection("doctors")
+    docs = collection_doctors.where("license_number", "==", license_number).stream()
+    for doc in docs:
+        doc.reference.update(payload)
 
 def register_doctor(payload):
-    table_doctors.put_item(Item=payload)
+    db = firestore.client()
+    collection_doctors = db.collection("doctors")
+    collection_doctors.add(payload)
 
 def find_doctor_by_credentials(payload):
+    db = firestore.client()
+    collection_doctors = db.collection("doctors")
     license_number = payload.get("license_number")
     password = payload.get("password")
     if not (license_number and password):
         return None
-    response = table_doctors.scan(
-        FilterExpression=Attr("license_number").eq(license_number) & Attr("password").eq(password)
-    )
-    items = response.get("Items", [])
-    return items[0] if items else None
+    docs = collection_doctors.where("license_number", "==", license_number).where("password", "==", password).stream()
+    for doc in docs:
+        return doc.to_dict()
+    return None
