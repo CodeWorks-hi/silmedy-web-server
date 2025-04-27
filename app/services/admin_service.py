@@ -25,15 +25,25 @@ def register_admin(payload):
     collection_admins = db.collection("admins")
     collection_admins.add(payload)
 
+
+from firebase_admin import firestore
+
 def find_admin_by_credentials(payload):
     db = firestore.client()
     collection_admins = db.collection("admins")
 
-    admin_id = payload.get("admin_id")
+    admin_id = payload.get("admin_id")  # 병원 ID (문서 ID)
     password = payload.get("password")
     if not (admin_id and password):
         return None
 
-    docs = collection_admins.where("admin_id", "==", admin_id).where("password", "==", password).stream()
-    items = [doc.to_dict() for doc in docs]
-    return items[0] if items else None
+    doc_ref = collection_admins.document(str(admin_id))
+    snapshot = doc_ref.get()
+    if not snapshot.exists:
+        return None
+
+    data = snapshot.to_dict()
+    if data.get("password") != password:
+        return None
+
+    return data
