@@ -84,12 +84,14 @@ def register_doctor(payload: dict):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# 로그인: 문서 ID로 조회 후 비밀번호 검증
-def find_doctor_by_credentials(payload: dict):
+# 로그인: 문서 ID로 조회 후 비밀번호 + 과(department) 검증
+def find_doctor_by_credentials(payload):
     db = firestore.client()
     license_number = payload.get("license_number")
     password = payload.get("password")
-    if not (license_number and password):
+    department = payload.get("department")
+
+    if not (license_number and password and department):
         return None
 
     doc_ref = db.collection("doctors").document(license_number)
@@ -98,7 +100,18 @@ def find_doctor_by_credentials(payload: dict):
         return None
 
     data = snapshot.to_dict()
+
+    # 비밀번호 검증
     if data.get("password") != password:
+        return None
+
+    # 과(department) 검증
+    saved_department = data.get("department")
+    if not saved_department:
+        return None
+
+    # 양쪽 다 소문자/공백제거해서 비교
+    if saved_department.strip().lower() != department.strip().lower():
         return None
 
     data["license_number"] = snapshot.id
