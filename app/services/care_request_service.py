@@ -1,14 +1,17 @@
-from app.core.config import dynamodb, db
+# app/services/care_request_service.py
+
+from app.core.config import dynamodb
+from firebase_admin import firestore
 from boto3.dynamodb.conditions import Attr
 from fastapi import HTTPException
 from decimal import Decimal
 
-# 패시보 : Decimal 형식 값 바꾸기
+# 🔵 DynamoDB Decimal 변환
 def decimal_to_native(obj):
     if isinstance(obj, list):
         return [decimal_to_native(item) for item in obj]
     elif isinstance(obj, dict):
-        return {k: decimal_to_native(v) for k, v in obj.items()}
+        return {k: decimal_to_native(v) for v in obj.items()}
     elif isinstance(obj, Decimal):
         if obj % 1 == 0:
             return int(obj)
@@ -17,7 +20,7 @@ def decimal_to_native(obj):
     else:
         return obj
 
-# 패시보 : 전체 개발 가져오기 (DynamoDB)
+# 🔵 전체 케어 요청 가져오기 (DynamoDB만 조회)
 def get_all_care_requests():
     try:
         table = dynamodb.Table("care_requests")
@@ -27,9 +30,11 @@ def get_all_care_requests():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# 패시보 : 대기중개+환자정보 배열 합칠기
+# 🔵 대기 중 케어 요청 + 환자 정보 합치기 (DynamoDB + Firestore 둘 다 조회)
 def get_waiting_care_requests():
     try:
+        db = firestore.client()  # ✅ 여기서만 생성
+
         table = dynamodb.Table("care_requests")
         response = table.scan(FilterExpression=Attr("is_solved").eq(False))
         care_requests = response.get("Items", [])
@@ -55,7 +60,7 @@ def get_waiting_care_requests():
                 "book_date": request.get("book_date"),
                 "book_hour": request.get("book_hour"),
                 "symptom_part": request.get("symptom_part", []),
-                "symptom_type": request.get("symptom_type", [])
+                "symptom_type": request.get("symptom_type", []),
             }
             result.append(combined)
 

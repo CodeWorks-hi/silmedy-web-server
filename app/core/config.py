@@ -37,3 +37,4 @@ def init_firebase():
         firebase_admin.initialize_app(cred, {
             'databaseURL': firebase_db_url
         })
+
