@@ -52,3 +52,4 @@ def get_waiting_care_requests():
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
