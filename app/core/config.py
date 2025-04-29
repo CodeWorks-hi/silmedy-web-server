@@ -1,3 +1,5 @@
+# app/core/config.py
+
 import os
 import json
 import boto3
@@ -5,13 +7,13 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from dotenv import load_dotenv
 
-# ✅ 1. 환경변수 로드
+# ✅ 1. 환경변수 로드 (.env)
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"))
 
 # ✅ 2. AWS 세션 설정
 aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
 aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-aws_region = os.getenv("AWS_REGION", "ap-northeast-2")
+aws_region = os.getenv("AWS_REGION", "ap-northeast-2")  # 기본값: ap-northeast-2 (서울)
 
 session = boto3.session.Session()
 
@@ -35,21 +37,24 @@ table_prescription_records = dynamodb.Table("prescription_records")
 # ✅ 5. Firebase 초기화 함수
 def init_firebase():
     if not firebase_admin._apps:
-        environment = os.getenv("ENVIRONMENT", "local")  # 기본은 local
+        environment = os.getenv("ENVIRONMENT", "local")  # 기본값: local
+        
         if environment == "local":
-            # 🔵 로컬 개발환경 - 'silmedy-web-server/secrets/firebase_service_account.json' 직접 읽기
+            # 🔵 로컬 개발환경 - secrets 폴더에서 JSON 파일 직접 읽기
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
             secrets_path = os.path.join(project_root, "secrets", "firebase-service-account.json")
             cred = credentials.Certificate(secrets_path)
             firebase_admin.initialize_app(cred, {
                 'databaseURL': os.getenv("FIREBASE_DB_URL")
             })
+        
         else:
-            # 🔵 배포 환경 (렌더 등) - .env의 JSON 문자열 읽기
+            # 🔵 배포 환경 (예: Render) - .env에 저장된 JSON 문자열을 사용
             firebase_credential_json = os.getenv("FIREBASE_CREDENTIALS_JSON")
             if not firebase_credential_json:
-                raise ValueError("FIREBASE_CREDENTIALS_JSON이 설정되지 않았습니다.")
+                raise ValueError("FIREBASE_CREDENTIALS_JSON 환경변수가 설정되지 않았습니다.")
             
+            # JSON 문자열 안에 개행 문자 복원
             firebase_credential_json = firebase_credential_json.replace("\\n", "\n")
             cred_info = json.loads(firebase_credential_json)
             cred = credentials.Certificate(cred_info)
