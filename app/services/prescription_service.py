@@ -1,16 +1,12 @@
-# app/services/prescription_service.py
-
 from app.core.config import dynamodb
 from fastapi import HTTPException
-from boto3.dynamodb.conditions import Attr
 from datetime import datetime, timezone, timedelta
-import random
+from boto3.dynamodb.conditions import Attr
 
-# 한국 시간
+# 한국 시간대
 KST = timezone(timedelta(hours=9))
 now = datetime.now(KST)
 timestamp = now.strftime("%Y%m%d_%H%M%S")
-random_suffix = f"{random.randint(0, 999):03d}"
 
 def get_all_prescription_records():
     try:
@@ -22,7 +18,19 @@ def get_all_prescription_records():
 
 def create_prescription_record(payload: dict):
     try:
-        prescription_id = int(f"{timestamp}{random_suffix}")
+        # 1️⃣ counters 테이블에서 prescription_id 카운터 값 증가
+        counter_table = dynamodb.Table("counters")
+        counter_response = counter_table.update_item(
+            Key={"counter_name": "prescription_id"},
+            UpdateExpression="SET current_id = if_not_exists(current_id, :start) + :inc",
+            ExpressionAttributeValues={
+                ":start": 1,
+                ":inc": 1
+            },
+            ReturnValues="UPDATED_NEW"
+        )
+
+        prescription_id = int(counter_response["Attributes"]["current_id"])
         prescribed_at = now.strftime("%Y-%m-%d %H:%M:%S")
 
         item = {
@@ -37,7 +45,10 @@ def create_prescription_record(payload: dict):
         table = dynamodb.Table("prescription_records")
         table.put_item(Item=item)
 
-        return {"message": "처방전 저장 완료", "prescription_id": prescription_id}
+        return {
+            "message": "처방전 저장 완료",
+            "prescription_id": prescription_id
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

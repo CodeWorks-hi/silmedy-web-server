@@ -20,10 +20,23 @@ def get_all_diagnosis_records():
 
 def create_diagnosis(payload: dict):
     try:
-        diagnosis_id = int(f"{timestamp}{random_suffix}")
+        # 1️⃣ counters 테이블에서 diagnosis_id 카운터 값 증가
+        counter_table = dynamodb.Table("counters")
+        counter_response = counter_table.update_item(
+            Key={"counter_name": "diagnosis_id"},
+            UpdateExpression="SET current_id = if_not_exists(current_id, :start) + :inc",
+            ExpressionAttributeValues={
+                ":start": 1,
+                ":inc": 1
+            },
+            ReturnValues="UPDATED_NEW"
+        )
+
+        diagnosis_id = int(counter_response["Attributes"]["current_id"])
         diagnosed_at = now.strftime("%Y-%m-%d %H:%M:%S")
 
-        table = dynamodb.Table("diagnosis_records")
+        # 2️⃣ diagnosis_records 테이블에 새로운 진단 기록 저장
+        diagnosis_table = dynamodb.Table("diagnosis_records")
         item = {
             "diagnosis_id": diagnosis_id,
             "doctor_id": payload.get("doctor_id"),
@@ -33,12 +46,13 @@ def create_diagnosis(payload: dict):
             "diagnosed_at": diagnosed_at
         }
 
-        table.put_item(Item=item)
+        diagnosis_table.put_item(Item=item)
 
         return {
             "message": "진단 기록 저장 완료",
             "diagnosis_id": diagnosis_id
         }
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
