@@ -32,7 +32,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # ✅ 5. 라우터 등록
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(hospitals_router, prefix="/api/v1")
