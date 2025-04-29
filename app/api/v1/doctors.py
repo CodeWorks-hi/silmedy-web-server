@@ -1,29 +1,32 @@
 # app/api/v1/doctors.py
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from app.services.doctor_service import (
     get_all_doctors,
-    delete_doctor_by_license,
-    update_doctor_by_license,
-    register_doctor
+    create_doctor,
+    update_doctor,
+    delete_doctor
 )
+from app.core.dependencies import get_current_user
 
 router = APIRouter()
 
+# 의사 목록 조회
 @router.get("/doctors")
-async def list_doctors():
+async def read_doctors(user=Depends(get_current_user)):
     return {"doctors": get_all_doctors()}
 
-@router.delete("/delete/doctor/{license_number}")
-async def delete_doctor(license_number: str):
-    delete_doctor_by_license(license_number)
-    return {"message": "삭제 완료"}
+# 의사 등록
+@router.post("/doctors")
+async def create_new_doctor(payload: dict, user=Depends(get_current_user)):
+    return create_doctor(payload)
 
-@router.put("/update/doctor/{license_number}")
-async def update_doctor(license_number: str, payload: dict):
-    update_doctor_by_license(license_number, payload)
-    return {"message": "수정 완료"}
+# 의사 정보 수정
+@router.put("/doctors/{license_number}")
+async def update_doctor_info(license_number: str, payload: dict, user=Depends(get_current_user)):
+    return update_doctor(license_number, payload)
 
-@router.post("/register/doctor")
-async def register_doctor_api(payload: dict):
-    return register_doctor(payload)
+# 의사 삭제
+@router.delete("/doctors/{license_number}")
+async def delete_doctor_info(license_number: str, user=Depends(get_current_user)):
+    return delete_doctor(license_number)

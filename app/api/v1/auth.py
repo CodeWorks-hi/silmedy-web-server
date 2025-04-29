@@ -1,12 +1,23 @@
-from fastapi import APIRouter, HTTPException
-from app.services.auth_service import doctor_login, admin_login
+# app/api/v1/auth.py
+
+from fastapi import APIRouter, Depends
+from app.services.auth_service import (
+    login_user,
+    register_user,
+    get_current_user_info
+)
+from app.core.dependencies import get_current_user
 
 router = APIRouter()
 
-@router.post("/login/doctor")
-async def login_doctor(payload: dict):
-    return doctor_login(payload)
+@router.post("/login")
+async def login(payload: dict):
+    return login_user(payload)
 
-@router.post("/login/admin")
-async def login_admin(payload: dict):
-    return admin_login(payload)
+@router.post("/register")
+async def register(payload: dict):
+    return register_user(payload)
+
+@router.get("/me")
+async def get_user_info(user=Depends(get_current_user)):
+    return get_current_user_info(user)
