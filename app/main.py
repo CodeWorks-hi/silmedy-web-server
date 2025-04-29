@@ -8,16 +8,12 @@ load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.dirname(__file__)),
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from app.core.config import init_firebase
-from app.api.v1.common import router as common_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.hospitals import router as hospitals_router
 from app.api.v1.doctors import router as doctors_router
-from app.api.v1.admins import router as admins_router
 from app.api.v1.diseases import router as diseases_router
 from app.api.v1.video_calls import router as video_calls_router
-from app.api.v1.patients import router as patients_router
 from app.api.v1.care_requests import router as care_requests_router
 from app.api.v1.drugs import router as drugs_router
 from app.api.v1.prescriptions import router as prescriptions_router
@@ -38,14 +34,11 @@ app.add_middleware(
 )
 
 # ✅ 5. 라우터 등록
-app.include_router(common_router, prefix="/api/v1")
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(hospitals_router, prefix="/api/v1")
 app.include_router(doctors_router, prefix="/api/v1")
-app.include_router(admins_router, prefix="/api/v1")
 app.include_router(diseases_router, prefix="/api/v1")
 app.include_router(video_calls_router, prefix="/api/v1")
-app.include_router(patients_router, prefix="/api/v1")
 app.include_router(care_requests_router, prefix="/api/v1")
 app.include_router(drugs_router, prefix="/api/v1")
 app.include_router(prescriptions_router, prefix="/api/v1")

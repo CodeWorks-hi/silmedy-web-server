@@ -1,33 +1,33 @@
 # app/api/v1/care_requests.py
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from app.services.care_request_service import (
-    get_all_care_requests,
-    create_care_request,
-    update_care_request,
-    delete_care_request,
-    get_waiting_care_requests
+    get_waiting_care_requests_by_doctor,
+    complete_care_request
 )
 from app.core.dependencies import get_current_user
 
 router = APIRouter()
 
-@router.get("/care-requests")
-async def read_care_requests(user=Depends(get_current_user)):
-    return {"care_requests": get_all_care_requests()}
+# 🔵 대기 중인 진료 요청 목록 조회 (로그인된 의사 기준)
+@router.get("/care-requests/waiting", summary="대기 중인 진료 요청 조회", description="로그인한 의사에게 배정된 대기 환자 목록을 조회합니다.")
+async def read_waiting_care_requests(user=Depends(get_current_user)):
+    try:
+        if user.get("role") != "doctor":
+            raise HTTPException(status_code=403, detail="의사 권한이 필요합니다.")
 
-@router.post("/care-requests")
-async def create_care(payload: dict, user=Depends(get_current_user)):
-    return create_care_request(payload)
+        doctor_id = int(user.get("license_number"))
+        return {"waiting_list": get_waiting_care_requests_by_doctor(doctor_id)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.put("/care-requests/{care_request_id}")
-async def update_care(care_request_id: str, payload: dict, user=Depends(get_current_user)):
-    return update_care_request(care_request_id, payload)
+# 🔵 진료 완료 처리
+@router.put("/care-requests/{request_id}/complete", summary="진료 완료 처리", description="특정 진료 요청을 완료 처리하고 완료 시간을 기록합니다.")
+async def complete_request(request_id: int, user=Depends(get_current_user)):
+    try:
+        if user.get("role") != "doctor":
+            raise HTTPException(status_code=403, detail="의사 권한이 필요합니다.")
 
-@router.delete("/care-requests/{care_request_id}")
-async def delete_care(care_request_id: str, user=Depends(get_current_user)):
-    return delete_care_request(care_request_id)
-
-@router.get("/care-requests/waiting")
-async def get_waiting_care(user=Depends(get_current_user)):
-    return {"waiting_list": get_waiting_care_requests()}
+        return complete_care_request(request_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

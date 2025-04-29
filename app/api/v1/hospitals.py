@@ -6,7 +6,7 @@ from app.core.dependencies import get_current_user
 
 router = APIRouter()
 
-# 병원 목록 조회
+# 수정된 hospitals.py
 @router.get("/hospitals")
-async def read_hospitals(user=Depends(get_current_user)):
+async def read_hospitals():
     return {"hospitals": get_all_hospitals()}

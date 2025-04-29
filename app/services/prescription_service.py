@@ -1,13 +1,16 @@
+# app/services/prescription_service.py
+
 from app.core.config import dynamodb
 from fastapi import HTTPException
 from datetime import datetime, timezone, timedelta
-from boto3.dynamodb.conditions import Attr
+from boto3.dynamodb.conditions import Key
+import random
 
-# 한국 시간대
+# 한국 시간대 설정
 KST = timezone(timedelta(hours=9))
 now = datetime.now(KST)
-timestamp = now.strftime("%Y%m%d_%H%M%S")
 
+# 🔵 처방전 전체 조회
 def get_all_prescription_records():
     try:
         table = dynamodb.Table("prescription_records")
@@ -16,9 +19,10 @@ def get_all_prescription_records():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-def create_prescription_record(payload: dict):
+# 🔵 처방전 등록
+def create_prescription(payload: dict):
     try:
-        # 1️⃣ counters 테이블에서 prescription_id 카운터 값 증가
+        # 1️⃣ 카운터 테이블에서 prescription_id 증가
         counter_table = dynamodb.Table("counters")
         counter_response = counter_table.update_item(
             Key={"counter_name": "prescription_id"},
@@ -33,58 +37,32 @@ def create_prescription_record(payload: dict):
         prescription_id = int(counter_response["Attributes"]["current_id"])
         prescribed_at = now.strftime("%Y-%m-%d %H:%M:%S")
 
-        # create_prescription_record 수정
+        # 2️⃣ 테이블에 저장
+        table = dynamodb.Table("prescription_records")
         item = {
             "prescription_id": prescription_id,
             "diagnosis_id": payload.get("diagnosis_id"),
             "doctor_id": payload.get("doctor_id"),
-            "patient_id": payload.get("patient_id"),  # ✅ 추가
             "medication_days": payload.get("medication_days"),
-            "medication_list": payload.get("medication_list", []),
+            "medication_list": payload.get("medication_list"),  # 복수의 약품 객체들
             "prescribed_at": prescribed_at
         }
 
-        table = dynamodb.Table("prescription_records")
         table.put_item(Item=item)
-
         return {
             "message": "처방전 저장 완료",
             "prescription_id": prescription_id
         }
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-def update_prescription_record(prescription_id: str, payload: dict):
-    try:
-        table = dynamodb.Table("prescription_records")
-        update_expression = "SET " + ", ".join(f"#{k}=:{k}" for k in payload.keys())
-        expression_attribute_names = {f"#{k}": k for k in payload.keys()}
-        expression_attribute_values = {f":{k}": v for k, v in payload.items()}
-
-        table.update_item(
-            Key={"prescription_id": int(prescription_id)},
-            UpdateExpression=update_expression,
-            ExpressionAttributeNames=expression_attribute_names,
-            ExpressionAttributeValues=expression_attribute_values
-        )
-        return {"message": "처방전 수정 완료"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-def delete_prescription_record(prescription_id: str):
-    try:
-        table = dynamodb.Table("prescription_records")
-        table.delete_item(Key={"prescription_id": int(prescription_id)})
-        return {"message": "처방전 삭제 완료"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
+# 🔵 특정 환자의 처방전만 조회 (옵션)
 def get_prescription_records_by_patient_id(patient_id: str):
     try:
         table = dynamodb.Table("prescription_records")
         response = table.scan(
-            FilterExpression=Attr("patient_id").eq(patient_id)
+            FilterExpression=Key("patient_id").eq(patient_id)
         )
         return response.get("Items", [])
     except Exception as e:

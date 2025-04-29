@@ -1,6 +1,8 @@
 fastapi
 uvicorn
-python-dotenv
+python-multipart
+PyJWT
+jinja2
 firebase-admin
 boto3
-google-auth
+python-dotenv

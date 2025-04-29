@@ -1,32 +1,15 @@
 # app/api/v1/prescriptions.py
 
-from fastapi import APIRouter
-from app.services.prescription_service import (
-    get_all_prescription_records,
-    create_prescription_record,
-    update_prescription_record,
-    delete_prescription_record,
-    get_prescription_records_by_patient_id
-)
+from fastapi import APIRouter, Depends, HTTPException
+from app.services.prescription_service import create_prescription
+from app.core.dependencies import get_current_user
 
 router = APIRouter()
 
-@router.get("/prescriptions")
-async def read_prescriptions():
-    return {"prescriptions": get_all_prescription_records()}
-
-@router.post("/prescriptions")
-async def create_prescription(payload: dict):
-    return create_prescription_record(payload)
-
-@router.put("/prescriptions/{prescription_id}")
-async def update_prescription(prescription_id: str, payload: dict):
-    return update_prescription_record(prescription_id, payload)
-
-@router.delete("/prescriptions/{prescription_id}")
-async def delete_prescription(prescription_id: str):
-    return delete_prescription_record(prescription_id)
-
-@router.get("/prescriptions/patient/{patient_id}")
-async def get_prescriptions_by_patient(patient_id: str):
-    return {"prescriptions": get_prescription_records_by_patient_id(patient_id)}
+# 처방전 등록 API
+@router.post("/prescriptions", summary="처방전 등록", description="특정 진단 ID에 대한 처방전을 생성합니다.")
+async def register_prescription(payload: dict, user=Depends(get_current_user)):
+    try:
+        return create_prescription(payload)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
