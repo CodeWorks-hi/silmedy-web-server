@@ -37,6 +37,7 @@ def create_prescription_record(payload: dict):
             "prescription_id": prescription_id,
             "diagnosis_id": payload.get("diagnosis_id"),
             "doctor_id": payload.get("doctor_id"),
+            "patient_id": payload.get("patient_id"),  # ✅ 추가!!
             "medication_days": payload.get("medication_days"),
             "medication_list": payload.get("medication_list", []),
             "prescribed_at": prescribed_at
