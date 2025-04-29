@@ -22,7 +22,7 @@ async def create_new_doctor(payload: dict, admin=Depends(get_current_admin)):
     return create_doctor(payload)
 
 # 의사 정보 수정
-@router.put("/doctors/{license_number}")
+@router.patch("/doctors/{license_number}")
 async def update_doctor_info(license_number: str, payload: dict, admin=Depends(get_current_admin)):
     return update_doctor(license_number, payload)
 

@@ -5,7 +5,7 @@ from app.services.auth_service import login_user
 
 router = APIRouter()
 
-# 로그인 (doctor / admin 구분)
+# 로그인 엔드포인트 (doctor / admin 공통)
 @router.post("/login")
 async def login(payload: dict):
     return login_user(payload)

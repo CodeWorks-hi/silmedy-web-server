@@ -16,7 +16,7 @@ async def read_waiting_care_requests(user=Depends(get_current_user)):
         if user.get("role") != "doctor":
             raise HTTPException(status_code=403, detail="의사 권한이 필요합니다.")
 
-        doctor_id = int(user.get("license_number"))
+        doctor_id = user.get("license_number")
         return {"waiting_list": get_waiting_care_requests_by_doctor(doctor_id)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -28,8 +28,8 @@ async def create_diagnosis_record(payload: dict, user=Depends(get_current_user))
 
 # 특정 환자의 진단 이력 조회
 @router.get("/diagnosis/patient/{patient_id}")
-async def read_patient_diagnosis(patient_id: int, user=Depends(get_current_user)):
+async def read_patient_diagnosis(patient_id: str, user=Depends(get_current_user)):
     try:
-        return {"diagnosis_records": get_diagnosis_by_patient_id(str(patient_id))}
+        return {"diagnosis_records": get_diagnosis_by_patient_id(patient_id)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

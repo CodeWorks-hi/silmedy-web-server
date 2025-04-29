@@ -17,12 +17,12 @@ def get_all_diagnosis_records():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# 환자 기준 진단 기록 조회
+# 특정 환자의 진단 이력 조회
 def get_diagnosis_by_patient_id(patient_id: str):
     try:
         table = dynamodb.Table("diagnosis_records")
         response = table.scan(
-            FilterExpression=Attr("patient_id").eq(int(patient_id))
+            FilterExpression=Attr("patient_id").eq(patient_id) 
         )
         return response.get("Items", [])
     except Exception as e:

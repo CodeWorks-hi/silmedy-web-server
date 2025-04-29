@@ -36,11 +36,12 @@ def get_all_care_requests():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-def get_waiting_care_requests_by_doctor(doctor_id: int):
+def get_waiting_care_requests_by_doctor(doctor_id: str):
     try:
         db = firestore.client()
         table = dynamodb.Table("care_requests")
 
+        # doctor_id도 문자열로 비교
         response = table.scan(
             FilterExpression=Attr("is_solved").eq(False) & Attr("doctor_id").eq(doctor_id)
         )
@@ -52,11 +53,13 @@ def get_waiting_care_requests_by_doctor(doctor_id: int):
             if not patient_id:
                 continue
 
+            # patient_id도 항상 문자열로 document 조회
             patient_doc = db.collection("patients").document(str(patient_id)).get()
             if not patient_doc.exists:
                 continue
 
             patient_data = patient_doc.to_dict()
+
             combined = {
                 "request_id": request.get("request_id"),
                 "name": patient_data.get("name"),
@@ -71,10 +74,11 @@ def get_waiting_care_requests_by_doctor(doctor_id: int):
             result.append(combined)
 
         return decimal_to_native(result)
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-# 🔵 진료 완료 처리 함수
+# 진료 완료 처리 함수
 def complete_care_request(request_id: int):
     try:
         table = dynamodb.Table("care_requests")

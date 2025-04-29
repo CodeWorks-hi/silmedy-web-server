@@ -1,17 +1,18 @@
-# app/services/auth_service.py
+# ✅ app/services/auth_service.py
 
 from app.core.config import get_firestore_client
 from app.core.security import create_access_token
 
+# 🔸 로그인 처리 (의사 / 관리자)
 def login_user(payload: dict):
     role = payload.get("role")
-    db = get_firestore_client()  # ✅ 여기 추가!
+    hospital_id = payload.get("hospital_id")
+    password = payload.get("password")
+    db = get_firestore_client()
 
     if role == "doctor":
-        public_health_center = payload.get("public_health_center")
-        department = payload.get("department")
         license_number = payload.get("license_number")
-        password = payload.get("password")
+        department = payload.get("department")
 
         doc_ref = db.collection("doctors").document(license_number)
         doc = doc_ref.get()
@@ -21,7 +22,7 @@ def login_user(payload: dict):
         doctor = doc.to_dict()
 
         if (
-            doctor.get("public_health_center") != public_health_center or
+            doctor.get("hospital_id") != hospital_id or
             doctor.get("department") != department or
             doctor.get("password") != password
         ):
@@ -46,27 +47,19 @@ def login_user(payload: dict):
         }
 
     elif role == "admin":
-        public_health_center = payload.get("public_health_center")
-        password = payload.get("password")
+        doc_ref = db.collection("admins").document(str(hospital_id))
+        doc = doc_ref.get()
+        if not doc.exists:
+            raise Exception("관리자를 찾을 수 없습니다.")
 
-        docs = get_firestore_client.collection("admins").where(
-            "public_health_center", "==", public_health_center
-        ).stream()
+        admin = doc.to_dict()
 
-        admin = None
-        for doc in docs:
-            admin_candidate = doc.to_dict()
-            if admin_candidate.get("password") == password:
-                admin = admin_candidate
-                admin["admin_id"] = doc.id
-                break
-
-        if admin is None:
+        if admin.get("password") != password:
             raise Exception("관리자 인증 실패")
 
         token_data = {
-            "admin_id": admin.get("admin_id"),
-            "hospital_id": admin.get("hospital_id"),
+            "admin_id": hospital_id,
+            "hospital_id": hospital_id,
             "role": "admin"
         }
         access_token = create_access_token(data=token_data)
@@ -75,11 +68,9 @@ def login_user(payload: dict):
             "access_token": access_token,
             "token_type": "bearer",
             "admin": {
-                "name": admin.get("name"),
-                "email": admin.get("email"),
-                "hospital_id": admin.get("hospital_id")
+                "hospital_id": hospital_id
             }
         }
 
     else:
-        raise Exception("role이 잘못되었습니다.")
+        raise Exception("잘못된 role입니다.")
