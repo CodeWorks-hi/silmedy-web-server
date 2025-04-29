@@ -11,7 +11,7 @@ def decimal_to_native(obj):
     if isinstance(obj, list):
         return [decimal_to_native(item) for item in obj]
     elif isinstance(obj, dict):
-        return {k: decimal_to_native(v) for v in obj.items()}
+        return {k: decimal_to_native(v) for k, v in obj.items()}
     elif isinstance(obj, Decimal):
         if obj % 1 == 0:
             return int(obj)
