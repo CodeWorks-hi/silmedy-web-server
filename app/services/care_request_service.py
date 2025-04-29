@@ -46,19 +46,18 @@ def get_waiting_care_requests():
 
             patient_data = patient_doc.to_dict()
 
-            combined = {
-                "request_id": request.get("request_id"),
+            # ✅ 원본 care_request 데이터 복사
+            combined = dict(request)
+
+            # ✅ 환자 정보 추가
+            combined.update({
                 "name": patient_data.get("name"),
-                "sign_language_needed": request.get("sign_language_needed", False),
-                "birth_date": patient_data.get("birth_date"),
-                "department": request.get("department"),
-                "book_date": request.get("book_date"),
-                "book_hour": request.get("book_hour"),
-                "symptom_part": request.get("symptom_part", []),
-                "symptom_type": request.get("symptom_type", []),
-            }
+                "birth_date": patient_data.get("birth_date")
+            })
+
             result.append(combined)
 
         return {"waiting_list": decimal_to_native(result)}
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
