@@ -76,3 +76,14 @@ def delete_prescription_record(prescription_id: str):
         return {"message": "처방전 삭제 완료"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def get_prescription_records_by_patient_id(patient_id: str):
+    try:
+        table = dynamodb.Table("prescription_records")
+        response = table.scan(
+            FilterExpression=Attr("patient_id").eq(patient_id)
+        )
+        return response.get("Items", [])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

@@ -5,7 +5,8 @@ from app.services.prescription_service import (
     get_all_prescription_records,
     create_prescription_record,
     update_prescription_record,
-    delete_prescription_record
+    delete_prescription_record,
+    get_prescription_records_by_patient_id
 )
 
 router = APIRouter()
@@ -25,3 +26,7 @@ async def update_prescription(prescription_id: str, payload: dict):
 @router.delete("/prescriptions/{prescription_id}")
 async def delete_prescription(prescription_id: str):
     return delete_prescription_record(prescription_id)
+
+@router.get("/prescriptions/patient/{patient_id}")
+async def get_prescriptions_by_patient(patient_id: str):
+    return {"prescriptions": get_prescription_records_by_patient_id(patient_id)}
