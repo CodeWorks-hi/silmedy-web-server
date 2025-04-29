@@ -6,7 +6,6 @@ from boto3.dynamodb.conditions import Attr
 from fastapi import HTTPException
 from decimal import Decimal
 
-# 🔵 DynamoDB Decimal 변환
 def decimal_to_native(obj):
     if isinstance(obj, list):
         return [decimal_to_native(item) for item in obj]
@@ -20,25 +19,21 @@ def decimal_to_native(obj):
     else:
         return obj
 
-# 🔵 전체 케어 요청 가져오기 (DynamoDB만 조회)
 def get_all_care_requests():
     try:
         table = dynamodb.Table("care_requests")
         response = table.scan()
-        items = response.get("Items", [])
-        return decimal_to_native(items)
+        return {"care_requests": decimal_to_native(response.get("Items", []))}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# 🔵 대기 중 케어 요청 + 환자 정보 합치기 (DynamoDB + Firestore 둘 다 조회)
 def get_waiting_care_requests():
     try:
-        db = firestore.client()  # ✅ 여기서만 생성
-
         table = dynamodb.Table("care_requests")
         response = table.scan(FilterExpression=Attr("is_solved").eq(False))
         care_requests = response.get("Items", [])
 
+        db = firestore.client()
         result = []
         for request in care_requests:
             patient_id = request.get("patient_id")
@@ -64,7 +59,6 @@ def get_waiting_care_requests():
             }
             result.append(combined)
 
-        return decimal_to_native(result)
-
+        return {"waiting_list": decimal_to_native(result)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
