@@ -6,7 +6,6 @@ import boto3
 import firebase_admin
 from firebase_admin import credentials, firestore
 from dotenv import load_dotenv
-import base64
 
 # ✅ 1. 환경변수 로드 (.env)
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"))
@@ -48,12 +47,13 @@ def init_firebase():
                 'databaseURL': os.getenv("FIREBASE_DB_URL")
             })
         else:
-            firebase_credential_base64 = os.getenv("FIREBASE_CREDENTIALS_JSON")
-            if not firebase_credential_base64:
+            firebase_credential_json = os.getenv("FIREBASE_CREDENTIALS_JSON")
+            if not firebase_credential_json:
                 raise ValueError("FIREBASE_CREDENTIALS_JSON이 설정되지 않았습니다.")
-            
-            decoded_json = base64.b64decode(firebase_credential_base64).decode("utf-8")
-            cred_info = json.loads(decoded_json)
+
+            # base64 디코딩 ❌ 필요 없음!
+            firebase_credential_json = firebase_credential_json.replace("\\n", "\n")
+            cred_info = json.loads(firebase_credential_json)
             cred = credentials.Certificate(cred_info)
             firebase_admin.initialize_app(cred, {
                 'databaseURL': os.getenv("FIREBASE_DB_URL")
