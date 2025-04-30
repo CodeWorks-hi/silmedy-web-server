@@ -9,6 +9,7 @@ def login_user(payload: dict):
     hospital_id = payload.get("hospital_id")
     password = payload.get("password")
     db = get_firestore_client()
+    print("🚀 받은 payload:", payload)
 
     if role == "doctor":
         license_number = payload.get("license_number")
