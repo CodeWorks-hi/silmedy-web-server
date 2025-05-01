@@ -26,6 +26,9 @@ def get_current_doctor(credentials: HTTPAuthorizationCredentials = Depends(secur
 def get_current_admin(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
     payload = decode_access_token(token)
+    print("🔍 관리자용 디코딩된 payload:", payload)  # 추가
+    print("📌 decoded payload:", payload)  # ✅ 이 로그 추가 필요
+
     if payload is None or payload.get("role") != "admin":
         raise HTTPException(status_code=403, detail="관리자 전용 API입니다.")
     return payload

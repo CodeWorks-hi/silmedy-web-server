@@ -1,3 +1,5 @@
+# app/core/security.py
+
 import jwt
 from datetime import datetime, timedelta
 
@@ -13,6 +15,7 @@ def create_access_token(data: dict, expires_delta: timedelta = timedelta(hours=1
 def decode_access_token(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        print("🧩 디코딩 결과:", payload)
         return payload
     except jwt.ExpiredSignatureError:
         return None

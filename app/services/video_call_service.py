@@ -7,7 +7,11 @@ def create_video_call(payload: dict):
     db = get_firestore_client()  # ✅ 수정
     collection_video_calls = db.collection("calls")
     doc_ref = collection_video_calls.document()
+
+    print("📞 생성 요청된 payload:", payload)  # 로그 추가
     doc_ref.set(payload)
+    print("✅ 생성된 room_id:", doc_ref.id)  # 로그 추가
+
     return {"id": doc_ref.id}
 
 # 🔵 통화 시작 처리

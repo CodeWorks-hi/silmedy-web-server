@@ -7,13 +7,7 @@ from fastapi import HTTPException
 from decimal import Decimal
 from datetime import datetime, timezone, timedelta
 
-
-
-
-# 한국 시간대 설정
 KST = timezone(timedelta(hours=9))
-
-
 
 def decimal_to_native(obj):
     if isinstance(obj, list):
@@ -28,20 +22,12 @@ def decimal_to_native(obj):
     else:
         return obj
 
-def get_all_care_requests():
+def get_waiting_care_requests_by_doctor(current_user: dict):
     try:
-        table = dynamodb.Table("care_requests")
-        response = table.scan()
-        return {"care_requests": decimal_to_native(response.get("Items", []))}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        doctor_id = int(current_user.get("license_number"))  # ✅ 숫자로 변환
 
-def get_waiting_care_requests_by_doctor(doctor_id: str):
-    try:
         db = firestore.client()
         table = dynamodb.Table("care_requests")
-
-        # doctor_id도 문자열로 비교
         response = table.scan(
             FilterExpression=Attr("is_solved").eq(False) & Attr("doctor_id").eq(doctor_id)
         )
@@ -52,12 +38,9 @@ def get_waiting_care_requests_by_doctor(doctor_id: str):
             patient_id = request.get("patient_id")
             if not patient_id:
                 continue
-
-            # patient_id도 항상 문자열로 document 조회
             patient_doc = db.collection("patients").document(str(patient_id)).get()
             if not patient_doc.exists:
                 continue
-
             patient_data = patient_doc.to_dict()
 
             combined = {
@@ -70,23 +53,19 @@ def get_waiting_care_requests_by_doctor(doctor_id: str):
                 "book_hour": request.get("book_hour"),
                 "symptom_part": request.get("symptom_part", []),
                 "symptom_type": request.get("symptom_type", []),
-                "patient_id": request.get("patient_id"),  # ✅ 추가
-                "doctor_id": request.get("doctor_id")     # ✅ 추가
+                "patient_id": request.get("patient_id"),
+                "doctor_id": request.get("doctor_id")
             }
             result.append(combined)
 
         return decimal_to_native(result)
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
-# 진료 완료 처리 함수
+
 def complete_care_request(request_id: int):
     try:
         table = dynamodb.Table("care_requests")
         now = datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S")
-
-        # request_id로 항목 업데이트
         table.update_item(
             Key={"request_id": request_id},
             UpdateExpression="SET is_solved = :true_val, solved_at = :now_time",
@@ -95,14 +74,10 @@ def complete_care_request(request_id: int):
                 ":now_time": now
             }
         )
-
         return {"message": "진료 완료 처리되었습니다.", "request_id": request_id, "solved_at": now}
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
 
-# 🔵 request_id 기반 상세 조회 함수
 def get_care_request_detail(request_id: int):
     try:
         table = dynamodb.Table("care_requests")
@@ -139,6 +114,5 @@ def get_care_request_detail(request_id: int):
         }
 
         return decimal_to_native(combined)
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
