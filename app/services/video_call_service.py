@@ -111,3 +111,20 @@ def save_text_message(payload: dict):
              .add({"text": text})
 
     return {"message": "메시지 저장 완료"}
+
+def save_answer(payload: dict):
+    fs_db = get_firestore_client()
+    call_id = payload["call_id"]
+    answer = payload["sdp"]
+    fs_db.collection("calls").document(call_id).update({"answer": answer})
+    return {"message": "Answer 저장 완료"}
+
+def reject_call(payload: dict):
+    fs_db = get_firestore_client()
+    call_id = payload["call_id"]
+    reason  = payload.get("reason", "rejected")
+    fs_db.collection("calls").document(call_id).update({
+        "status": "rejected",
+        "reject_reason": reason
+    })
+    return {"message": "통화 거부 처리 완료"}
