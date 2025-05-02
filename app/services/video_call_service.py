@@ -70,7 +70,6 @@ def start_video_call(payload: dict):
                 "type":       "CALL_STARTED",
                 "callId":     call_id,       # roomId
                 "roomId":     call_id,       # <-- 여기에 roomId
-                "offerSdp":   offer_sdp,     # (옵션)
             },
             "token": patient_token,
         }
