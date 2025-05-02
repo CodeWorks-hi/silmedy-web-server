@@ -4,7 +4,7 @@ import os
 import json
 import boto3
 import firebase_admin
-from firebase_admin import credentials, firestore
+from firebase_admin import credentials, firestore, db, messaging
 from dotenv import load_dotenv
 
 # ✅ 1. .env 파일 로드
@@ -58,6 +58,19 @@ def init_firebase():
             'databaseURL': os.getenv("FIREBASE_DB_URL")
         })
 
-# ✅ 6. Firestore 클라이언트
+# Firestore 클라이언트
 def get_firestore_client():
+    # existing initialization...
     return firestore.client()
+
+# Realtime Database 클라이언트
+def get_realtime_db():
+    # 이미 firebase_admin.initialize_app() 호출됨을 가정
+    return db
+
+def get_fcm_client():
+    """
+    Firebase Admin Messaging 클라이언트를 반환합니다.
+    """
+    init_firebase()
+    return messaging
