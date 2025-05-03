@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Body, HTTPException
 from app.services.patient_service import register_fcm_token
 
-router = APIRouter(prefix="/api/v1/patients")
+router = APIRouter()
 
 @router.post("/{patient_id}/fcm-token")
 async def register_token(patient_id: str, payload: dict = Body(...)):
