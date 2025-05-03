@@ -42,34 +42,31 @@ def create_video_call(payload: dict):
     return {"id": call_id}
 
 
-def start_video_call(payload: dict):
-    """
-    1) Firestore 상태 업데이트 → started
-    2) RTDB status 필드도 started로 설정 (옵션)
-    3) FCM으로 환자에게 CALL_STARTED 알림 전송
-    """
-    call_id = payload.get("call_id")
-    patient_token = payload.get("patient_fcm_token")
-
-    if not call_id:
-        return {"error": "call_id is required"}, 400
-
-    # Firestore 상태 업데이트
+async def start_video_call(payload: dict):
     fs_db = get_firestore_client()
-    fs_db.collection("calls").document(call_id).update({"status": "started"})
+    call_id = payload.get("call_id")
+    patient_id = payload.get("patient_id")
 
-    # RTDB status 필드 업데이트
+    # ① Firestore, RTDB 상태 업데이트
+    fs_db.collection("calls").document(call_id).update({"status": "started"})
     rt_db = get_realtime_db()
     rt_db.reference(f"calls/{call_id}/status").set("started")
 
-    # FCM 푸시 전송
+    # ② 환자 FCM 토큰 조회 (payload 우선, DB fallback)
+    patient_token = payload.get("patient_fcm_token")
+    if not patient_token and patient_id:
+        doc = fs_db.collection("patients").document(str(patient_id)).get()
+        if doc.exists:
+            patient_token = doc.to_dict().get("fcm_token")
+
+    # ③ FCM 푸시 전송
     if patient_token:
         fcm = get_fcm_client()
         message = {
             "data": {
-                "type":       "CALL_STARTED",
-                "callId":     call_id,       # roomId
-                "roomId":     call_id,       # <-- 여기에 roomId
+                "type": "CALL_STARTED",
+                "callId": call_id,
+                "roomId": call_id
             },
             "token": patient_token,
         }

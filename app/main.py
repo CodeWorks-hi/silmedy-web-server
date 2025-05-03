@@ -18,6 +18,7 @@ from app.api.v1.care_requests import router as care_requests_router
 from app.api.v1.drugs import router as drugs_router
 from app.api.v1.prescriptions import router as prescriptions_router
 from app.api.v1.diagnosis import router as diagnosis_router
+from app.api.v1.patients import router as patients_router
 
 # ✅ 2. Firebase 초기화
 init_firebase()
@@ -43,3 +44,4 @@ app.include_router(care_requests_router, prefix="/api/v1")
 app.include_router(drugs_router, prefix="/api/v1")
 app.include_router(prescriptions_router, prefix="/api/v1")
 app.include_router(diagnosis_router, prefix="/api/v1")
+app.include_router(patients_router, prefix="/api/v1")
