@@ -24,3 +24,4 @@ async def login(payload: LoginPayload):
             status_code=500,
             detail="로그인 처리 중 알 수 없는 오류가 발생했습니다."
         )
+

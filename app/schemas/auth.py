@@ -13,3 +13,5 @@ class LoginPayload(BaseModel):
     @classmethod
     def cast_hospital_id_to_str(cls, v):
         return str(v)
+    
+    
