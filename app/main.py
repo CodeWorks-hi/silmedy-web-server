@@ -29,7 +29,7 @@ app = FastAPI()
 # ✅ 4. CORS 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000","https://silmedy-web-server.onrender.com"],  # ⭐️ 와일드카드 대신 명시
+    allow_origins=["http://localhost:3000"],  # ⭐️ 와일드카드 대신 명시
     allow_credentials=True,                   # ⭐️ 쿠키/인증 헤더 허용
     allow_methods=["*"],
     allow_headers=["*"],
@@ -45,3 +45,4 @@ app.include_router(drugs_router, prefix="/api/v1")
 app.include_router(prescriptions_router, prefix="/api/v1")
 app.include_router(diagnosis_router, prefix="/api/v1")
 app.include_router(patients_router, prefix="/api/v1")
+
