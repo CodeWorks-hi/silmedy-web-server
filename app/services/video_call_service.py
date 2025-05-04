@@ -30,8 +30,8 @@ def create_video_call(payload: dict):
     rt_db = get_realtime_db()
     rt_ref = rt_db.reference(f"calls/{call_id}")
     rt_ref.set({
-        "offer": None,
-        "answer": None,
+        "offer": "",
+        "answer": "",
         "callerCandidates": {},
         "calleeCandidates": {}
     })
