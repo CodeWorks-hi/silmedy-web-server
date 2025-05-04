@@ -19,7 +19,11 @@ async def create_call_room(payload: dict, user=Depends(get_current_user)):
 
 @router.post("/start")
 async def start_call(payload: dict, user=Depends(get_current_user)):
-    return start_video_call(payload)
+    try:
+        return start_video_call(payload)
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        raise  # or HTTPException(500, detail=str(e))
 
 @router.post("/answer")
 async def post_answer(payload: dict, user=Depends(get_current_user)):
