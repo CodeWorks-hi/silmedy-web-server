@@ -7,6 +7,7 @@ from app.core.config import (
 # ★ 여기에 messaging 을 import 합니다.
 from firebase_admin import messaging
 
+
 # 🛠 앱 시작 시 Firebase 초기화 한 번 해두기
 init_firebase()
 
@@ -37,16 +38,14 @@ def create_video_call(payload: dict):
     return {"id": call_id}
 
 
-async def start_video_call(payload: dict):
-    """
-    1) Firestore·RTDB 상태 'started'로 업데이트
-    2) FCM 메시지 발송 (messaging.Message 인스턴스)
-    """
-    fs_db     = get_firestore_client()
-    call_id   = payload.get("call_id")
-    patient_id= payload.get("patient_id")
 
-    # ① Firestore, RTDB 상태 업데이트
+
+async def start_video_call(payload: dict):
+    fs_db      = get_firestore_client()
+    call_id    = payload.get("call_id")
+    patient_id = payload.get("patient_id")
+
+    # ① Firestore, RTDB 상태 업데이트 (기존 코드)
     fs_db.collection("calls").document(call_id).update({"status": "started"})
     rt_db = get_realtime_db()
     rt_db.reference(f"calls/{call_id}/status").set("started")
@@ -58,17 +57,23 @@ async def start_video_call(payload: dict):
         if doc.exists:
             patient_token = doc.to_dict().get("fcm_token")
 
-    # ③ FCM 푸시 전송: 반드시 messaging.Message 로 생성
+    # ────────────────────────────────────────────────────
+    # ③ FCM 푸시 전송: notification + data 페이로드 구성
+    # ────────────────────────────────────────────────────
     if patient_token:
         msg = messaging.Message(
+            notification=messaging.Notification(
+                title="영상 통화 요청",
+                body="통화를 수락하려면 탭하세요."
+            ),
             data={
-                "type":   "CALL_STARTED",
                 "callId": call_id,
                 "roomId": call_id,
+                "type":   "CALL_STARTED",
             },
             token=patient_token,
         )
-        # send() 는 동기 함수입니다.
+        # 동기 호출로 메시지 전송
         messaging.send(msg)
 
     return {"message": "통화 시작 및 알림 전송 완료"}

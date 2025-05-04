@@ -1,5 +1,5 @@
 # app/api/v1/video_calls.py
-from firebase_admin import messaging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.services.video_call_service import (
     create_video_call,    # sync 함수: dict 반환
@@ -28,43 +28,46 @@ async def create_call_room(payload: dict, user=Depends(get_current_user)):
     return create_video_call(payload)
 
 
-async def start_video_call(payload: dict):
-    fs_db      = get_firestore_client()
-    call_id    = payload.get("call_id")
-    patient_id = payload.get("patient_id")
+@router.post(
+    "/start",
+    summary="통화 시작 처리 및 환자에게 FCM 푸시 전송",
+    status_code=status.HTTP_200_OK,
+)
 
-    # ① Firestore, RTDB 상태 업데이트 (기존 코드)
-    fs_db.collection("calls").document(call_id).update({"status": "started"})
-    rt_db = get_realtime_db()
-    rt_db.reference(f"calls/{call_id}/status").set("started")
+async def start_call(payload: dict, user=Depends(get_current_user)):
+    """
+    payload 예시:
+    {
+      "call_id": "NcuwTCsElAupVGiXfBPi",
+      "doctor_id": "123456",
+      "patient_id": 13
+      // "patient_fcm_token": "..."  // (선택) 직접 주입 가능
+    }
+    """
+    try:
+        # start_video_call 이 async 이므로 await!
+        result = await start_video_call(payload)
+        return result
+    except Exception as e:
+        # 서버 로그에 전체 스택트레이스를 출력하고, 500 리턴
+        import traceback; traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
-    # ② 환자 FCM 토큰 조회 (payload 우선, DB fallback)
-    patient_token = payload.get("patient_fcm_token")
-    if not patient_token and patient_id:
-        doc = fs_db.collection("patients").document(str(patient_id)).get()
-        if doc.exists:
-            patient_token = doc.to_dict().get("fcm_token")
+@router.post(
+    "/answer",
+    summary="환자가 보낸 Answer(SDP) 저장",
+    status_code=status.HTTP_200_OK,
+)
+async def post_answer(payload: dict, user=Depends(get_current_user)):
+    """
+    payload = {
+      "call_id": "<문서 ID>",
+      "sdp": { ... }       # RTCSessionDescription.toJSON() 형식
+    }
+    sync 함수 save_answer 호출 → {"message": "..."} 반환
+    """
+    return save_answer(payload)
 
-    # ────────────────────────────────────────────────────
-    # ③ FCM 푸시 전송: notification + data 페이로드 구성
-    # ────────────────────────────────────────────────────
-    if patient_token:
-        msg = messaging.Message(
-            notification=messaging.Notification(
-                title="영상 통화 요청",
-                body="통화를 수락하려면 탭하세요."
-            ),
-            data={
-                "callId": call_id,
-                "roomId": call_id,
-                "type":   "CALL_STARTED",
-            },
-            token=patient_token,
-        )
-        # 동기 호출로 메시지 전송
-        messaging.send(msg)
-
-    return {"message": "통화 시작 및 알림 전송 완료"}
 
 @router.post(
     "/reject",
