@@ -91,6 +91,7 @@ async def start_video_call(payload: dict) -> dict:
             },
             token=patient_token,
         )
+        print(f"▶ FCM data payload: {msg.data}")
         try:
             message_id = messaging.send(msg)
             print(f"✅ FCM 전송 성공, message_id={message_id}")
