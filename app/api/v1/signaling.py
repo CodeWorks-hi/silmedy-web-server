@@ -10,7 +10,7 @@ def save_answer(room_id: str, sdp: dict):
     db.reference(f"signaling/{room_id}/answer").set(sdp)
     return {"message": "answer 저장 완료"}
 
-# 🔵 ICE 후보 추가
+# 🔵 ICE 후보 추가 
 def add_ice_candidate(room_id: str, role: str, candidate: dict):
     db.reference(f"signaling/{room_id}/{role}Candidates").push(candidate)
     return {"message": "ICE candidate 저장 완료"}
