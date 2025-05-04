@@ -33,23 +33,21 @@ async def create_call_room(payload: dict, user=Depends(get_current_user)):
     summary="통화 시작 처리 및 환자에게 FCM 푸시 전송",
     status_code=status.HTTP_200_OK,
 )
-
 async def start_call(payload: dict, user=Depends(get_current_user)):
     """
     payload 예시:
     {
       "call_id": "NcuwTCsElAupVGiXfBPi",
       "doctor_id": "123456",
-      "patient_id": 13
-      // "patient_fcm_token": "..."  // (선택) 직접 주입 가능
+      "patient_id": 13,
+      // "patient_fcm_token": "…"  // (선택) 직접 주입 가능
     }
     """
     try:
-        # start_video_call 이 async 이므로 await!
+        # 반드시 await
         result = await start_video_call(payload)
         return result
     except Exception as e:
-        # 서버 로그에 전체 스택트레이스를 출력하고, 500 리턴
         import traceback; traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
