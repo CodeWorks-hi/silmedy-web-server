@@ -11,7 +11,7 @@ from app.services.video_call_service import (
 )
 from app.core.dependencies import get_current_user  # JWT 검증용 Dependency
 
-router = APIRouter(prefix="/video_calls", tags=["video_calls"])
+router = APIRouter()
 
 
 @router.post(
