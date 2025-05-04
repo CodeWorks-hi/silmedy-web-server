@@ -33,25 +33,25 @@ async def create_call_room(payload: dict, user=Depends(get_current_user)):
     summary="통화 시작 처리 및 환자에게 FCM 푸시 전송",
     status_code=status.HTTP_200_OK,
 )
+
 async def start_call(payload: dict, user=Depends(get_current_user)):
     """
-    1) payload에서 call_id, patient_id, 환자 FCM 토큰 조회
-    2) Firestore/RTDB 상태를 'started'로 업데이트 (sync 부분)
-    3) FCM 푸시 전송 (async)
-    4) {"message": "..."} 형태로 결과 반환
+    payload 예시:
+    {
+      "call_id": "NcuwTCsElAupVGiXfBPi",
+      "doctor_id": "123456",
+      "patient_id": 13
+      // "patient_fcm_token": "..."  // (선택) 직접 주입 가능
+    }
     """
     try:
-        # start_video_call은 async 함수이므로 반드시 await
+        # start_video_call 이 async 이므로 await!
         result = await start_video_call(payload)
         return result
     except Exception as e:
-        # traceback 찍고 500 에러로 변환해서 클라이언트에 전달
+        # 서버 로그에 전체 스택트레이스를 출력하고, 500 리턴
         import traceback; traceback.print_exc()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"통화 시작 중 서버 오류: {e}"
-        )
-
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post(
     "/answer",
