@@ -38,46 +38,38 @@ class FcmTokenPayload(BaseModel):
 
 # ─── 비즈니스 로직 함수 ────────────────────────────────
 def login_patient(email: str, password: str) -> PatientLoginResponse:
-    """
-    1) Firestore 'patients' 컬렉션에서 이메일로 문서 조회
-    2) 비밀번호 검증 (실제 시스템에서는 해시 비교 필요)
-    3) JWT access/refresh 토큰 발급
-    4) 환자 이름과 토큰을 포함한 응답 객체 반환
-    """
     # Firestore 클라이언트 획득
     db = get_firestore_client()
-    # 이메일 일치 문서 조회 (최초 1개)
-    docs = db.collection("patients").where("email", "==", email).limit(1).get()
+    docs = db.collection("patients") \
+             .where("email", "==", email) \
+             .limit(1).get()
     if not docs:
-        # 해당 이메일의 환자 문서가 없으면 인증 실패
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="이메일 또는 비밀번호가 올바르지 않습니다."
         )
     user = docs[0].to_dict()
 
-    # 비밀번호 검증 (여기서는 단순 문자열 비교)
     if password != user.get("password"):
-        # 비밀번호 불일치 시 인증 실패
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="이메일 또는 비밀번호가 올바르지 않습니다."
         )
 
-    # JWT payload에 sub로 식별자(email) 포함
-    # access 토큰: 짧은 유효기간 (예: 30분)
     access_token = create_access_token(
         data={"sub": user["email"]},
         expires_delta=datetime.timedelta(minutes=30)
     )
-    # refresh 토큰: 긴 유효기간 (config에서 설정)
     refresh_token = create_refresh_token(data={"sub": user["email"]})
 
-    # 응답 객체 생성: 환자 이름과 토큰 정보 반환
+    # Firestore 에 저장된 fcm_token 필드 꺼내기
+    fcm_token = user.get("fcm_token")  # 필드가 없으면 None
+
     return PatientLoginResponse(
         access_token=access_token,
         refresh_token=refresh_token,
         name=user.get("name"),
+        fcm_token=fcm_token,             # 여기에 추가
     )
 
 def save_patient_fcm_token(patient_email: str, fcm_token: str) -> bool:
