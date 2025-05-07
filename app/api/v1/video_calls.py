@@ -97,7 +97,7 @@ async def end_call(payload: dict, user=Depends(get_current_user)):
 
 
 @router.post(
-    "/text",
+    "/",
     summary="통화 중 텍스트 메시지 저장",
     status_code=status.HTTP_200_OK,
 )
@@ -107,6 +107,5 @@ async def save_call_text(payload: dict, user=Depends(get_current_user)):
       "call_id": "<문서 ID>",
       "text": "안녕하세요!"
     }
-    sync 함수 save_text_message 호출 → {"message": "..."} 반환
     """
     return save_text_message(payload)

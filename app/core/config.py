@@ -6,6 +6,7 @@ import boto3
 import firebase_admin
 from firebase_admin import credentials, firestore, db, messaging
 from dotenv import load_dotenv
+from functools import lru_cache
 
 # ────────────────────────────────────────────────────────
 # 1. 환경변수 로드 (.env)
@@ -79,6 +80,7 @@ def init_firebase():
 # ────────────────────────────────────────────────────────
 # 4. Firebase 클라이언트 반환 헬퍼
 # ────────────────────────────────────────────────────────
+@lru_cache()
 def get_firestore_client():
     """
     Firestore 문서 CRUD용 클라이언트 반환.

@@ -10,6 +10,7 @@ import datetime
 from google.cloud import firestore
 
 
+
 # 🛠 앱 시작 시 Firebase 초기화 한 번 해두기
 init_firebase()
 
@@ -133,7 +134,8 @@ def save_text_message(payload: dict):
              .collection("messages") \
              .add({
                  "text": text,
-                 "timestamp": firestore.SERVER_TIMESTAMP})
+                 "timestamp": firestore.SERVER_TIMESTAMP,
+             })
 
     return {"message": "메시지 저장 완료"}
 
