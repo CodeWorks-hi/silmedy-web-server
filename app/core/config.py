@@ -37,7 +37,7 @@ dynamodb = session.resource(
 
 # DynamoDB 테이블 객체들
 table_hospitals          = dynamodb.Table("hospitals")
-table_diseases           = dynamodb.Table("diseases")
+table_diseases           = dynamodb.Table("diseases_similar")
 table_drugs              = dynamodb.Table("drugs")
 table_counters           = dynamodb.Table("counters")
 table_care_requests      = dynamodb.Table("care_requests")
