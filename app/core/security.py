@@ -1,13 +1,14 @@
 # app/core/security.py
-
+import os
 import jwt
 from datetime import datetime, timedelta
 from typing import Optional
 
-# ⚠️ 실제 운영 환경에선 .env나 Secret Manager에서 불러오세요.
-SECRET_KEY = "your_secret_key"
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM  = "HS256"
 
+ACCESS_EXPIRE_SECONDS  = int(os.getenv("ACCESS_TOKEN_EXPIRE_SECONDS", 3600))
+REFRESH_EXPIRE_SECONDS = int(os.getenv("REFRESH_TOKEN_EXPIRE_SECONDS", 604800))
 # ────────────────────────────────────────────────────────
 # 1. 액세스 토큰
 # ────────────────────────────────────────────────────────
