@@ -59,7 +59,6 @@ def create_diagnosis(payload: dict):
             "diagnosis_text": payload.get("diagnosis_text", ""),
             "request_id":     payload.get("request_id"),
             "summary_text":   payload.get("summary_text", ""),
-            "notes":          payload.get("notes", ""),
             "symptoms":       payload.get("symptoms", []),
             "diagnosed_at":   diagnosed_at
         }

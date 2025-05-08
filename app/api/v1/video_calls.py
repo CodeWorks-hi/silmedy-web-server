@@ -97,7 +97,7 @@ async def end_call(payload: dict, user=Depends(get_current_user)):
 
 
 @router.post(
-    "/",
+    "/text",
     summary="통화 중 텍스트 메시지 저장",
     status_code=status.HTTP_200_OK,
 )
