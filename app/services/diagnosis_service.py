@@ -49,27 +49,23 @@ def create_diagnosis(payload: dict):
 
         diagnosis_id = int(counter_response["Attributes"]["current_id"])
 
-        # 2️⃣ diagnosis_records 테이블에 진단 기록 저장
+        # 2️⃣ diagnosis_records 테이블에 저장
         diagnosis_table = dynamodb.Table("diagnosis_records")
         item = {
-            "diagnosis_id":  diagnosis_id,
-            "doctor_id":     payload.get("doctor_id"),
-            "patient_id":    int(payload.get("patient_id")),
-            "disease_code":  payload.get("disease_code"),
-            "diagnosis_text":payload.get("diagnosis_text", ""),
-            "request_id":    payload.get("request_id"),        
-            "summary_text":  payload.get("summary_text", ""),   
-            "symptoms":      payload.get("symptoms", []),       
-            "prescription":  payload.get("prescription", []),
-            "diagnosed_at":  diagnosed_at
+            "diagnosis_id":   diagnosis_id,
+            "doctor_id":      payload.get("doctor_id"),
+            "patient_id":     int(payload.get("patient_id")),
+            "disease_code":   payload.get("disease_code", []),
+            "diagnosis_text": payload.get("diagnosis_text", ""),
+            "request_id":     payload.get("request_id"),
+            "summary_text":   payload.get("summary_text", ""),
+            "notes":          payload.get("notes", ""),
+            "symptoms":       payload.get("symptoms", []),
+            "diagnosed_at":   diagnosed_at
         }
-
         diagnosis_table.put_item(Item=item)
 
-        return {
-            "message": "진단 기록 저장 완료",
-            "diagnosis_id": diagnosis_id
-        }
+        return {"message": "진단 기록 저장 완료", "diagnosis_id": diagnosis_id}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
