@@ -10,6 +10,5 @@ class Doctor(BaseModel):
     contact: str
     gender: Optional[str] = None
     profile_url: Optional[str] = None
-    bio: Optional[List[str]] = []
     availability: Optional[Dict[str, str]] = {}
     created_at: Optional[str] = None
