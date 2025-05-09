@@ -29,7 +29,7 @@ app = FastAPI()
 # ✅ 4. CORS 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # ⭐️ 와일드카드 대신 명시
+    allow_origins=["http://localhost:3000","http://3.36.62.211"],  # ⭐️ 와일드카드 대신 명시
     allow_credentials=True,                   # ⭐️ 쿠키/인증 헤더 허용
     allow_methods=["*"],
     allow_headers=["*"],
