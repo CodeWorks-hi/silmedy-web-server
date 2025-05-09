@@ -15,16 +15,25 @@ def get_all_doctors():
 
 # 의사 등록
 def create_doctor(payload: dict):
-    db = get_firestore_client()  # 함수 호출
+    db = get_firestore_client()
     license_number = payload.get("license_number")
     if not license_number:
         raise Exception("license_number는 필수입니다.")
 
+    # 1) 원본 payload 수정하지 않도록 복사
+    data = payload.copy()
+
+    # 2) Firestore 필드에서는 license_number 삭제
+    data.pop("license_number", None)
+
+    # 3) 문서 ID로만 license_number 사용
     doc_ref = db.collection("doctors").document(license_number)
     if doc_ref.get().exists:
         raise Exception("이미 존재하는 license_number입니다.")
 
-    doc_ref.set(payload)
+    # 4) 필드에는 data만 저장
+    doc_ref.set(data)
+
     return {"message": "의사 등록 완료", "license_number": license_number}
 
 # 의사 정보 수정 
