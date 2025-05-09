@@ -30,10 +30,10 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     origins = [
-    "http://localhost:3000",       # 개발용
-    "http://3.36.62.211",          # 내부 테스트용
-    "https://boohoday.com"         # ✅ 배포용 도메인
-]
+        "http://localhost:3000",       # 개발용
+        "http://3.36.62.211",          # 내부 테스트용
+        "https://boohoday.com"         # ✅ 배포용 도메인
+    ],
     allow_credentials=True,                   # ⭐️ 쿠키/인증 헤더 허용
     allow_methods=["*"],
     allow_headers=["*"],
