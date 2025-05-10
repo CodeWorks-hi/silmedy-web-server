@@ -1,7 +1,7 @@
 # app/api/v1/prescriptions.py
 
-from fastapi import APIRouter, Depends, HTTPException
-from app.services.prescription_service import create_prescription
+from fastapi import APIRouter, Depends, HTTPException, Path, Body
+from app.services.prescription_service import create_prescription, update_prescription_url
 from app.core.dependencies import get_current_user
 
 router = APIRouter()
