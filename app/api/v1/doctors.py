@@ -1,50 +1,57 @@
 # app/api/v1/doctors.py
-
 from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
 from app.services.doctor_service import (
     get_doctors_by_hospital,
     create_doctor,
     update_doctor,
     delete_doctor,
-    set_profile_url
+    upload_doctor_profile_service  # 서비스 함수로 변경
 )
 from app.core.dependencies import get_current_admin
+from botocore.exceptions import ClientError
 
 router = APIRouter()
 
-# 의사 목록 조회
 @router.get("/doctors")
 async def read_doctors(admin=Depends(get_current_admin)):
     hospital_id = admin["hospital_id"]
     return {"doctors": get_doctors_by_hospital(hospital_id)}
 
-# 의사 등록
 @router.post("/doctors")
 async def create_new_doctor(payload: dict, admin=Depends(get_current_admin)):
     return create_doctor(payload)
 
-# 의사 정보 수정
 @router.patch("/doctors/{license_number}")
 async def update_doctor_info(license_number: str, payload: dict, admin=Depends(get_current_admin)):
     return update_doctor(license_number, payload)
 
-# 의사 삭제
 @router.delete("/doctors/{license_number}")
 async def delete_doctor_info(license_number: str, admin=Depends(get_current_admin)):
     return delete_doctor(license_number)
 
-
-
-@router.post("/doctors/{license_number}/profile")
-async def upload_doctor_profile(
+@router.post(
+    "/doctors/{license_number}/profile",
+    summary="의사 프로필 사진 업로드",
+    description="S3에 업로드→기존삭제→Firestore 갱신",
+    response_model=dict,
+)
+async def upload_doctor_profile_endpoint(
     license_number: str,
     file: UploadFile = File(...),
-    admin=Depends(get_current_admin)
-) -> dict:
-    # 1) 파일 읽어서 bytes로 변환
-    content = await file.read()
+    admin=Depends(get_current_admin),
+):
     try:
-        url = set_profile_url(license_number, content, file.content_type)
+        contents = await file.read()
     except Exception as e:
-        raise HTTPException(400, str(e))
-    return {"profile_url": url}
+        raise HTTPException(status_code=400, detail=f"파일 읽기 실패: {e}")
+
+    try:
+        new_url = upload_doctor_profile_service(
+            license_number, contents, file.content_type
+        )
+    except ClientError as e:
+        raise HTTPException(status_code=502, detail=f"S3 오류: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    return {"profile_url": new_url}
