@@ -68,3 +68,25 @@ def get_prescription_records_by_patient_id(patient_id: str):
         return response.get("Items", [])
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def update_prescription_url(prescription_id: int, url: str):
+    """
+    prescription_records 테이블의 prescription_id 항목을 찾아
+    prescription_url 속성만 덮어씁니다.
+    """
+    table = dynamodb.Table("prescription_records")
+
+    # 1) 존재 여부 확인
+    resp = table.get_item(Key={"prescription_id": prescription_id})
+    if "Item" not in resp:
+        raise KeyError("Not found")
+
+    # 2) URL 업데이트
+    table.update_item(
+        Key={"prescription_id": prescription_id},
+        UpdateExpression="SET prescription_url = :u",
+        ExpressionAttributeValues={":u": url},
+    )
+
+    return {"message": "URL 업데이트 성공", "prescription_id": prescription_id, "prescription_url": url}
