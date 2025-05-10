@@ -3,12 +3,16 @@
 from app.core.config import get_firestore_client, upload_profile_image
 
 
-# 의사 목록 조회 
-def get_all_doctors():
-    db = get_firestore_client()  # 함수 호출
-    doctors = db.collection("doctors").stream()
+# 병원 아이디 기반 의사목록 조회 
+def get_doctors_by_hospital(hospital_id: str):
+    db = get_firestore_client()
+    docs = (
+        db.collection("doctors")
+          .where("hospital_id", "==", hospital_id)
+          .stream()
+    )
     result = []
-    for doc in doctors:
+    for doc in docs:
         data = doc.to_dict()
         data["license_number"] = doc.id
         result.append(data)

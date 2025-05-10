@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
 from app.services.doctor_service import (
-    get_all_doctors,
+    get_doctors_by_hospital,
     create_doctor,
     update_doctor,
     delete_doctor,
@@ -15,7 +15,8 @@ router = APIRouter()
 # 의사 목록 조회
 @router.get("/doctors")
 async def read_doctors(admin=Depends(get_current_admin)):
-    return {"doctors": get_all_doctors()}
+    hospital_id = admin["hospital_id"]
+    return {"doctors": get_doctors_by_hospital(hospital_id)}
 
 # 의사 등록
 @router.post("/doctors")
