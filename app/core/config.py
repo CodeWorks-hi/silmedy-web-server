@@ -7,6 +7,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore, db, messaging
 from dotenv import load_dotenv
 from functools import lru_cache
+import uuid
 
 # ────────────────────────────────────────────────────────
 # 1. 환경변수 로드 (.env)
@@ -102,3 +103,62 @@ def get_fcm_client():
     """
     init_firebase()
     return messaging
+
+# ────────────────────────────────────────────────────────
+# 5. S3 클라이언트 & 업로드 헬퍼
+# ────────────────────────────────────────────────────────
+# boto3 세션을 기반으로 S3 클라이언트 생성
+# IAM Role을 사용해 권한을 부여받는 환경에서는 aws_access_key_id, aws_secret_access_key 생략 가능
+s3_client = session.client(
+    "s3",
+    region_name=aws_region,
+)
+
+def upload_profile_image(file_bytes: bytes, content_type: str) -> str:
+    """
+    바이너리 형태의 프로필 이미지를 S3에 업로드하고,
+    업로드된 객체의 퍼블릭 URL을 반환합니다.
+
+    Args:
+      file_bytes   (bytes): 업로드할 이미지의 raw 바이트 데이터
+      content_type (str):   이미지의 MIME 타입 (예: "image/jpeg", "image/png")
+
+    Returns:
+      str: S3에 저장된 이미지의 퍼블릭 URL
+
+    Raises:
+      botocore.exceptions.ClientError: 업로드 실패 시 예외 발생
+    """
+
+    # --- 1) 대상 버킷 이름 가져오기 ---
+    bucket = os.getenv("AWS_S3_BUCKET")
+    # 환경변수에 설정된 S3 버킷 이름 (예: "silmedy-doctor")
+
+    # --- 2) S3 객체 키(key) 생성 ---
+    # "profiles/" 디렉토리 아래에 UUID 기반의 고유 파일명 사용
+    unique_filename = uuid.uuid4().hex
+    key = f"profiles/{unique_filename}"
+
+    # --- 3) S3에 객체 업로드 ---
+    # put_object 파라미터:
+    #   Bucket      : 업로드 대상 버킷 이름
+    #   Key         : 버킷 내 객체 경로 (profiles/xxxx...)
+    #   Body        : 실제 파일 바이트
+    #   ContentType : 파일 MIME 타입
+    #   ACL         : "public-read"로 설정하여 퍼블릭 접근 허용
+    s3_client.put_object(
+        Bucket=bucket,
+        Key=key,
+        Body=file_bytes,
+        ContentType=content_type,
+        ACL="public-read"
+    )
+
+    # --- 4) 업로드된 객체의 퍼블릭 URL 구성 ---
+    # S3 퍼블릭 URL 형식: 
+    #   https://{버킷}.s3.{리전}.amazonaws.com/{키}
+    region = aws_region
+    url = f"https://{bucket}.s3.{region}.amazonaws.com/{key}"
+
+    # 최종 URL 반환
+    return url
