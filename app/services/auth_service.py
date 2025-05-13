@@ -25,7 +25,7 @@ def login_user(payload: dict):
         department     = payload.get("department")
         # string → int 변환
         try:
-            hospital_id = int(payload.get("hospital_id"))
+            hospital_id = payload.get("hospital_id")
         except:
             raise ValueError("올바른 병원 ID를 입력하세요.")
 
