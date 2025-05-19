@@ -6,7 +6,9 @@ router = APIRouter()
 
 @router.post(
     "/login",
-    summary="관리자/의사 로그인",
+    tags=["공통 - 로그인"],
+    summary="로그인 요청을 처리합니다.",
+    description="관리자 또는 의사가 로그인하기 위한 API입니다. 이메일과 비밀번호를 입력받아 JWT 토큰을 반환합니다.",
     response_model_exclude_none=True
 )
 async def login(payload: LoginPayload):

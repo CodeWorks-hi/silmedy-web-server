@@ -7,7 +7,12 @@ from app.core.dependencies import get_current_user
 router = APIRouter()
 
 # 처방전 등록 API
-@router.post("/prescriptions", summary="처방전 등록", description="특정 진단 ID에 대한 처방전을 생성합니다.")
+@router.post(
+    "/prescriptions",
+    tags=["의사 - 처방 관리"],
+    summary="처방전을 등록합니다.",
+    description="특정 진단 ID에 대한 처방전을 생성하는 기능입니다."
+)
 async def register_prescription(payload: dict, user=Depends(get_current_user)):
     try:
         return create_prescription(payload)
@@ -17,8 +22,9 @@ async def register_prescription(payload: dict, user=Depends(get_current_user)):
     # ★ 추가: URL 업데이트용 PATCH 엔드포인트
 @router.patch(
     "/prescriptions/{prescription_id}/url",
-    summary="처방전 이미지 URL 업데이트",
-    description="기존에 생성된 처방전 ID에 대해 prescription_url 필드만 덮어씁니다.",
+    tags=["의사 - 처방 관리"],
+    summary="처방전 이미지를 업데이트합니다.",
+    description="기존에 생성된 처방전의 prescription_url 필드를 수정하는 기능입니다.",
 )
 async def patch_prescription_url(
     prescription_id: int = Path(..., description="처방전 ID"),

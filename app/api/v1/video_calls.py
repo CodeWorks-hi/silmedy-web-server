@@ -16,7 +16,9 @@ router = APIRouter()
 
 @router.post(
     "/create",
-    summary="새 영상 통화 방 생성",
+    tags=["의사 - 영상통화 진행"],
+    summary="영상 통화 방을 생성합니다.",
+    description="Firestore에 메타데이터를 저장하고 RTDB에 signaling 구조를 초기화하여 새로운 영상 통화 방을 생성하는 기능입니다.",
     status_code=status.HTTP_200_OK,
 )
 async def create_call_room(payload: dict, user=Depends(get_current_user)):
@@ -30,7 +32,9 @@ async def create_call_room(payload: dict, user=Depends(get_current_user)):
 
 @router.post(
     "/start",
-    summary="통화 시작 처리 및 환자에게 FCM 푸시 전송",
+    tags=["의사 - 영상통화 진행"],
+    summary="통화를 시작하고 환자에게 푸시 알림을 보냅니다.",
+    description="의사가 통화를 시작하며, 환자에게 Firebase Cloud Messaging 푸시 알림을 전송하는 기능입니다.",
     status_code=status.HTTP_200_OK,
 )
 async def start_call(payload: dict, user=Depends(get_current_user)):
@@ -53,7 +57,9 @@ async def start_call(payload: dict, user=Depends(get_current_user)):
 
 @router.post(
     "/answer",
-    summary="환자가 보낸 Answer(SDP) 저장",
+    tags=["의사 - 영상통화 진행"],
+    summary="환자가 보낸 Answer SDP를 저장합니다.",
+    description="WebRTC 연결을 위해 환자가 보낸 Answer SDP 정보를 RTDB에 저장하는 기능입니다.",
     status_code=status.HTTP_200_OK,
 )
 async def post_answer(payload: dict, user=Depends(get_current_user)):
@@ -69,7 +75,9 @@ async def post_answer(payload: dict, user=Depends(get_current_user)):
 
 @router.post(
     "/reject",
-    summary="통화 거절 처리",
+    tags=["의사 - 영상통화 진행"],
+    summary="영상 통화를 거절합니다.",
+    description="의사가 영상 통화를 거절하고 사유를 기록하는 기능입니다.",
     status_code=status.HTTP_200_OK,
 )
 async def post_reject(payload: dict, user=Depends(get_current_user)):
@@ -85,7 +93,9 @@ async def post_reject(payload: dict, user=Depends(get_current_user)):
 
 @router.post(
     "/end",
-    summary="통화 종료 처리",
+    tags=["의사 - 영상통화 진행"],
+    summary="영상 통화를 종료합니다.",
+    description="의사가 통화를 종료하며, 관련 상태를 갱신하는 기능입니다.",
     status_code=status.HTTP_200_OK,
 )
 async def end_call(payload: dict, user=Depends(get_current_user)):
@@ -98,7 +108,9 @@ async def end_call(payload: dict, user=Depends(get_current_user)):
 
 @router.post(
     "/text",
-    summary="통화 중 텍스트 메시지 저장",
+    tags=["의사 - 영상통화 진행"],
+    summary="통화 중 텍스트 메시지를 저장합니다.",
+    description="영상 통화 중 송수신된 텍스트 메시지를 저장하는 기능입니다.",
     status_code=status.HTTP_200_OK,
 )
 async def save_call_text(payload: dict, user=Depends(get_current_user)):
