@@ -10,28 +10,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1) 코드 체크아웃 (Runner 에서만)
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2) SSH 에이전트 실행 및 EC2 키 로드
       - name: Setup SSH key
         uses: webfactory/ssh-agent@v0.5.4
         with:
           ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-      # 3) EC2를 known_hosts 에 등록
       - name: Add EC2 to known_hosts
         run: ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      # 4) Runner 에서 EC2로 코드 동기화 (rsync)
       - name: Sync code to EC2 via rsync
         run: |
           rsync -avz --delete \
             . \
             ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/silmedy-web-server
 
-      # 5) EC2 접속 → Docker 빌드 & 교체
       - name: Deploy on EC2 via Docker
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -46,13 +41,11 @@ jobs:
             docker stop silmedy_prod_container || true
             docker rm   silmedy_prod_container || true
 
-            # 불필요 이미지 정리
+            # 사용하지 않는 이미지 정리
             docker image prune -a -f
 
-            # 캐시 없이 새 이미지 빌드
+            # Dockerfile 이 이 위치에 있어야 합니다!
             docker build --no-cache -t silmedy_prod .
-
-            # 컨테이너 실행
             docker run -d \
               --env-file ./secrets/.env \
               -p 5000:5000 \
