@@ -25,14 +25,26 @@ jobs:
         run: ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
       # 4) Base64 시크릿 디코딩 → .env + Firebase JSON 생성
-      - name: Decode ENV and Firebase key
+      # 기존 ENV_B64 디코딩 스텝 대신 이걸 사용하세요
+      - name: Generate .env and Firebase key
         run: |
           mkdir -p secrets
-          echo "${{ secrets.ENV_B64 }}" \
-            | tr -d '\r\n' \
-            | base64 -d \
-            > .env
-      
+
+          # .env 파일을 secrets에 저장한 개별 시크릿 값으로 직접 작성
+          cat <<EOF > .env
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION=${{ secrets.AWS_REGION }}
+          AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}
+          POSTAL_CODE_KEY=${{ secrets.POSTAL_CODE_KEY }}
+          FIREBASE_CREDENTIALS_PATH=secrets/firebase-service-account.json
+          FIREBASE_DB_URL=${{ secrets.FIREBASE_DB_URL }}
+          SECRET_KEY=${{ secrets.SECRET_KEY }}
+          ACCESS_TOKEN_EXPIRE_SECONDS=${{ secrets.ACCESS_TOKEN_EXPIRE_SECONDS }}
+          REFRESH_TOKEN_EXPIRE_SECONDS=${{ secrets.REFRESH_TOKEN_EXPIRE_SECONDS }}
+          EOF
+
+          # Firebase 서비스 계정 JSON(Base64) 디코딩
           echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_B64 }}" \
             | tr -d '\r\n' \
             | base64 -d \
