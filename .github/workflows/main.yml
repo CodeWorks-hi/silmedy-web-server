@@ -24,14 +24,22 @@ jobs:
       - name: Add EC2 to known_hosts
         run: ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      # 4) 로컬 코드 → EC2 동기화
+      # 4) Base64 시크릿 디코딩 → .env + Firebase JSON 생성
+      - name: Decode ENV and Firebase key
+        run: |
+          mkdir -p secrets
+          echo "${{ secrets.ENV_B64 }}" | base64 -d > .env
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_B64 }}" | base64 -d \
+            > secrets/firebase-service-account.json
+
+      # 5) 로컬 코드 → EC2 동기화
       - name: Sync code to EC2 via rsync
         run: |
           rsync -avz --delete \
             . \
             ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/silmedy-web-server
 
-      # 5) EC2 접속 후 서비스 재시작
+      # 6) EC2 접속 후 서비스 재시작
       - name: Restart service on EC2
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -41,14 +49,15 @@ jobs:
           script: |
             set -e
             cd ~/silmedy-web-server
-
+  
             # Python 가상환경 생성·의존성 설치
             if [ ! -d .venv ]; then
               python3 -m venv .venv
             fi
             source .venv/bin/activate
             pip install -r requirements.txt
-
+  
             # FastAPI 앱 실행 또는 재시작
             pm2 restart silmedy-web-server --update-env \
-              || pm2 start uvicorn --name silmedy-web-server --interpreter python3 -- silmedi.main:app --host 0.0.0.0 --port 5000
+              || pm2 start uvicorn --name silmedy-web-server \
+                   --interpreter python3 -- silmedi.main:app --host 0.0.0.0 --port 5000
