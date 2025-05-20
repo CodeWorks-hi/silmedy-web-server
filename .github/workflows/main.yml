@@ -49,5 +49,13 @@ jobs:
             source .venv/bin/activate
             pip install -r requirements.txt
 
-            # pm2로 프로세스 재시작 (없으면 start)
-            pm2 restart silmedy-web-server || pm2 start server.py --name silmedy-web-server
+            # uvicorn 으로 FastAPI 앱 실행(또는 재시작)
+            pm2 restart silmedy-web-server \
+              --update-env \
+            || pm2 start uvicorn \
+              --name silmedy-web-server \
+              --interpreter python3 \
+              -- \ 
+              silmedi.main:app \
+              --host 0.0.0.0 \
+              --port 5000
