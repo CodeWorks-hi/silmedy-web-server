@@ -1,9 +1,9 @@
-name: Deploy Backend (SSH & Rsync)
+name: Deploy Backend (SSH & Rsync & PM2)
 
-# main 브랜치에 푸시될 때마다 실행
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   deploy-backend:
@@ -20,29 +20,18 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-      # 3) known_hosts 설정
+      # 3) EC2 호스트를 known_hosts에 등록
       - name: Add EC2 to known_hosts
-        run: |
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+        run: ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      # 4) 빌드(필요 시)
-      - name: Install dependencies & Build
-        run: |
-          cd silmedy-web-server
-          # (파이썬 가상환경 생성·의존성 설치 예시)
-          python3 -m venv .venv
-          source .venv/bin/activate
-          pip install -r requirements.txt
-          # (마이그레이션·정적파일 수집 등 추가 작업)
-
-      # 5) 소스 동기화 (rsync 사용)
+      # 4) 로컬 코드 → EC2 동기화
       - name: Sync code to EC2 via rsync
         run: |
           rsync -avz --delete \
-            silmedy-web-server/ \
-            ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USERNAME }}/silmedy-web-server/
+            . \
+            ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/silmedy-web-server
 
-      # 6) EC2 접속 후 서비스 재시작
+      # 5) EC2 접속 후 서비스 재시작
       - name: Restart service on EC2
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -50,7 +39,15 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            set -e
             cd ~/silmedy-web-server
+
+            # (필요 시) Python 가상환경 생성·의존성 설치
+            if [ ! -d .venv ]; then
+              python3 -m venv .venv
+            fi
             source .venv/bin/activate
+            pip install -r requirements.txt
+
             # pm2로 프로세스 재시작 (없으면 start)
             pm2 restart silmedy-web-server || pm2 start server.py --name silmedy-web-server
