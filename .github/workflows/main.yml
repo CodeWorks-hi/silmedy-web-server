@@ -42,20 +42,13 @@ jobs:
             set -e
             cd ~/silmedy-web-server
 
-            # (필요 시) Python 가상환경 생성·의존성 설치
+            # Python 가상환경 생성·의존성 설치
             if [ ! -d .venv ]; then
               python3 -m venv .venv
             fi
             source .venv/bin/activate
             pip install -r requirements.txt
 
-            # uvicorn 으로 FastAPI 앱 실행(또는 재시작)
-            pm2 restart silmedy-web-server \
-              --update-env \
-            || pm2 start uvicorn \
-              --name silmedy-web-server \
-              --interpreter python3 \
-              -- \ 
-              silmedi.main:app \
-              --host 0.0.0.0 \
-              --port 5000
+            # FastAPI 앱 실행 또는 재시작
+            pm2 restart silmedy-web-server --update-env \
+              || pm2 start uvicorn --name silmedy-web-server --interpreter python3 -- silmedi.main:app --host 0.0.0.0 --port 5000
