@@ -30,6 +30,10 @@ jobs:
           rsync -avz --delete \
             . \
             ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/silmedy-web-server
+          rsync -avz --delete \
+            . \
+            secrets/.env \
+            ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/silmedy-web-server
 
       # 5) EC2 접속 후 서비스 재시작
       - name: Restart service on EC2
@@ -48,6 +52,11 @@ jobs:
             fi
             source .venv/bin/activate
             pip install -r requirements.txt
+
+            # .env 파일의 키/값을 환경변수로 export
+            set -a
+            source ./secrets/.env
+            set +a
 
             # FastAPI 앱 실행 또는 재시작
             pm2 restart silmedy-web-server --update-env \
