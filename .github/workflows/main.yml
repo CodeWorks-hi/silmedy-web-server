@@ -1,4 +1,4 @@
-name: Deploy Backend (SSH & Rsync & PM2)
+name: Deploy Backend via Docker
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  deploy-backend:
+  deploy-backend-docker:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,41 +24,8 @@ jobs:
       - name: Add EC2 to known_hosts
         run: ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      # 4) Base64 시크릿 디코딩 → .env + Firebase JSON 생성
-      # 기존 ENV_B64 디코딩 스텝 대신 이걸 사용하세요
-      - name: Generate .env and Firebase key
-        run: |
-          mkdir -p secrets
-
-          # .env 파일을 secrets에 저장한 개별 시크릿 값으로 직접 작성
-          cat <<EOF > .env
-          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION=${{ secrets.AWS_REGION }}
-          AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}
-          POSTAL_CODE_KEY=${{ secrets.POSTAL_CODE_KEY }}
-          FIREBASE_CREDENTIALS_PATH=secrets/firebase-service-account.json
-          FIREBASE_DB_URL=${{ secrets.FIREBASE_DB_URL }}
-          SECRET_KEY=${{ secrets.SECRET_KEY }}
-          ACCESS_TOKEN_EXPIRE_SECONDS=${{ secrets.ACCESS_TOKEN_EXPIRE_SECONDS }}
-          REFRESH_TOKEN_EXPIRE_SECONDS=${{ secrets.REFRESH_TOKEN_EXPIRE_SECONDS }}
-          EOF
-
-          # Firebase 서비스 계정 JSON(Base64) 디코딩
-          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_B64 }}" \
-            | tr -d '\r\n' \
-            | base64 -d \
-            > secrets/firebase-service-account.json
-
-      # 5) 로컬 코드 → EC2 동기화
-      - name: Sync code to EC2 via rsync
-        run: |
-          rsync -avz --delete \
-            . \
-            ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/silmedy-web-server
-
-      # 6) EC2 접속 후 서비스 재시작
-      - name: Restart service on EC2
+      # 4) SSH로 접속해 Docker 배포 스크립트 실행
+      - name: Deploy on EC2 via Docker
         uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -66,16 +33,29 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -e
+            # 프로젝트 디렉터리로 이동
             cd ~/silmedy-web-server
-  
-            # Python 가상환경 생성·의존성 설치
-            if [ ! -d .venv ]; then
-              python3 -m venv .venv
-            fi
-            source .venv/bin/activate
-            pip install -r requirements.txt
-  
-            # FastAPI 앱 실행 또는 재시작
-            pm2 restart silmedy-web-server --update-env \
-              || pm2 start uvicorn --name silmedy-web-server \
-                   --interpreter python3 -- silmedi.main:app --host 0.0.0.0 --port 5000
+
+            # 최신 코드 가져오기
+            git pull origin main
+
+            # 기존 컨테이너 정지·삭제
+            docker stop silmedy_prod_container || true
+            docker rm   silmedy_prod_container || true
+
+            # 사용하지 않는 이미지·볼륨 정리
+            docker image prune -a -f
+
+            # 캐시 없이 새 이미지 빌드
+            docker build --no-cache -t silmedy_prod .
+
+            # 새 컨테이너 실행
+            docker run -d \
+              --env-file ./secrets/.env \
+              -p 5000:5000 \
+              --name silmedy_prod_container \
+              --restart unless-stopped \
+              silmedy_prod
+
+            # (선택) 간단 헬스체크
+            docker ps --filter "name=silmedy_prod_container"
