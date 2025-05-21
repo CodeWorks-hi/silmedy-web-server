@@ -1,64 +1,47 @@
-name: Deploy Backend (Docker on EC2)
+name: Deploy Backend via Docker
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   deploy-backend:
     runs-on: ubuntu-latest
 
     steps:
-      # 1) 코드를 체크아웃
-      - name: Checkout 코드
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # 2) SSH 에이전트에 키 로드
-      - name: Setup SSH key
+      - name: Setup SSH
         uses: webfactory/ssh-agent@v0.5.4
         with:
           ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-      # 3) known_hosts에 EC2 호스트 추가
-      - name: Add EC2 to known_hosts
+      - name: Add to known_hosts
         run: ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      # 4) 로컬 워크스페이스를 EC2로 동기화 (rsync)
-      - name: Sync code to EC2 via rsync
-        run: |
-          rsync -avz --delete \
-            . \
-            ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/silmedy-web-server
-
-      # 5) EC2에서 Docker 배포 스크립트 실행
-      - name: Restart service on EC2 (Docker)
+      - name: Build & Deploy on EC2
         uses: appleboy/ssh-action@v0.1.6
         with:
-          host:     ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
-          key:      ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            set -e
             cd ~/silmedy-web-server
 
-            # ① 기존 컨테이너 정지·삭제
+            # Git pull (optional if you rsync instead)
+            git pull origin main
+
+            # 컨테이너 재빌드
             docker stop silmedy_prod_container || true
             docker rm   silmedy_prod_container || true
-
-            # ② 불필요 이미지·볼륨 일괄 제거
             docker image prune -a -f
-
-            # ③ 캐시 없이 새 이미지 빌드
             docker build --no-cache -t silmedy_prod .
 
-            # ④ 새 컨테이너 실행
+            # 마운트(또는 COPY) 된 secrets/.env, secrets/firebase-service-account.json 사용
             docker run -d \
-              --env-file ./secrets/.env \
-              -p 5000:5000 \
               --name silmedy_prod_container \
+              --env-file ./.env \
+              -p 5000:5000 \
               --restart unless-stopped \
               silmedy_prod
-
-            # ⑤ (선택) 상태 확인
-            docker ps --filter "name=silmedy_prod_container"
