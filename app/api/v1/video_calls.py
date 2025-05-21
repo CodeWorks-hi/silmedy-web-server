@@ -73,22 +73,22 @@ async def post_answer(payload: dict, user=Depends(get_current_user)):
     return save_answer(payload)
 
 
-@router.post(
-    "/reject",
-    tags=["의사 - 영상통화 진행"],
-    summary="영상 통화를 거절합니다.",
-    description="의사가 영상 통화를 거절하고 사유를 기록하는 기능입니다.",
-    status_code=status.HTTP_200_OK,
-)
-async def post_reject(payload: dict, user=Depends(get_current_user)):
-    """
-    payload = {
-      "call_id": "<문서 ID>",
-      "reason": "busy"     # 거절 사유 (옵션)
-    }
-    sync 함수 reject_call 호출 → {"message": "..."} 반환
-    """
-    return reject_call(payload)
+# @router.post(
+#     "/reject",
+#     tags=["의사 - 영상통화 진행"],
+#     summary="영상 통화를 거절합니다.",
+#     description="의사가 영상 통화를 거절하고 사유를 기록하는 기능입니다.",
+#     status_code=status.HTTP_200_OK,
+# )
+# async def post_reject(payload: dict, user=Depends(get_current_user)):
+#     """
+#     payload = {
+#       "call_id": "<문서 ID>",
+#       "reason": "busy"     # 거절 사유 (옵션)
+#     }
+#     sync 함수 reject_call 호출 → {"message": "..."} 반환
+#     """
+#     return reject_call(payload)
 
 
 @router.post(
@@ -106,18 +106,18 @@ async def end_call(payload: dict, user=Depends(get_current_user)):
     return end_video_call(payload)
 
 
-@router.post(
-    "/text",
-    tags=["의사 - 영상통화 진행"],
-    summary="통화 중 텍스트 메시지를 저장합니다.",
-    description="영상 통화 중 송수신된 텍스트 메시지를 저장하는 기능입니다.",
-    status_code=status.HTTP_200_OK,
-)
-async def save_call_text(payload: dict, user=Depends(get_current_user)):
-    """
-    payload = {
-      "call_id": "<문서 ID>",
-      "text": "안녕하세요!"
-    }
-    """
-    return save_text_message(payload)
+# @router.post(
+#     "/text",
+#     tags=["의사 - 영상통화 진행"],
+#     summary="통화 중 텍스트 메시지를 저장합니다.",
+#     description="영상 통화 중 송수신된 텍스트 메시지를 저장하는 기능입니다.",
+#     status_code=status.HTTP_200_OK,
+# )
+# async def save_call_text(payload: dict, user=Depends(get_current_user)):
+#     """
+#     payload = {
+#       "call_id": "<문서 ID>",
+#       "text": "안녕하세요!"
+#     }
+#     """
+#     return save_text_message(payload)
