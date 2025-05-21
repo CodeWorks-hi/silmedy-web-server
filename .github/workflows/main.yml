@@ -41,7 +41,7 @@ jobs:
             # 마운트(또는 COPY) 된 secrets/.env, secrets/firebase-service-account.json 사용
             docker run -d \
               --name silmedy_prod_container \
-              --env-file ./secrets/.env \
+              --env-file ./.env \
               -p 5000:5000 \
               --restart unless-stopped \
               silmedy_prod
